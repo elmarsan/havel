@@ -20,5 +20,5 @@ type MsgHeader struct {
 }
 
 const (
-	Version = "version"
+	Version = 0x76657273696F6E0000000000
 )
