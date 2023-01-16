@@ -1,6 +1,11 @@
 package main
 
-import "bytes"
+import (
+	"bytes"
+	"encoding/binary"
+	"net"
+	"time"
+)
 
 // https://en.bitcoin.it/wiki/Protocol_documentation#version
 type MsgVersion struct {
@@ -11,11 +16,12 @@ type MsgVersion struct {
 	// Services represents bitfield of features to be enabled for this connection.
 	Services uint64
 	// Timestamp represents standard UNIX timestamp.
-	Timestamp int64
+	Timestamp time.Time
 	// AddRecv represents the network address of the node receiving this msg.
-	AddRecv [26]byte
+	// AddRecv [26]byte
+	AddRecv net.Addr
 	// AddFrom represents the network address of the node sending this msg.
-	AddFrom [26]byte
+	AddFrom net.Addr
 	// Nonce represents random nonce generated every time a version msg is sent.
 	Nonce uint64
 	// UserAgent represents information of the node.
@@ -35,5 +41,17 @@ func (msgv *MsgVersion) Encode(b *bytes.Buffer) error {
 
 // TODO: implement
 func (msgv *MsgVersion) Decode(b *bytes.Buffer) error {
+	headers := &MsgHeader{}
+	headers.Decode(b)
+
+	version := binary.LittleEndian.Uint32(b.Bytes()[24:28])
+	services := binary.LittleEndian.Uint64(b.Bytes()[28:36])
+	unix := binary.LittleEndian.Uint64(b.Bytes()[36:44])
+
+	msgv.Headers = *headers
+	msgv.Version = version
+	msgv.Services = services
+	msgv.Timestamp = time.Unix(int64(unix), 0)
+
 	return nil
 }
