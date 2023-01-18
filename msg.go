@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
-	"strconv"
 	"time"
 )
 
@@ -42,24 +41,52 @@ func (msgHeader *MsgHeader) Encode(b *bytes.Buffer) error {
 // [16:20] Checksum
 // [20:24] Length
 func (msgHeader *MsgHeader) Decode(b *bytes.Buffer) error {
-	magicUint32 := binary.LittleEndian.Uint32(b.Bytes()[0:4])
+	// Decode magic
+	magicBytes := make([]byte, 4)
+	_, err := b.Read(magicBytes)
+	if err != nil {
+		return fmt.Errorf("Could not decode magic")
+	}
+
+	magicUint32 := binary.LittleEndian.Uint32(magicBytes)
 	magic, err := NewBitcoinNet(magicUint32)
 	if err != nil {
 		return err
 	}
 
-	hexCmd := "0x" + hex.EncodeToString(b.Bytes()[4:16])
+	msgHeader.Magic = *magic
+
+	// Decode command
+	cmdBytes := make([]byte, 12)
+	_, err = b.Read(cmdBytes)
+	if err != nil {
+		return fmt.Errorf("Could not decode command")
+	}
+
+	hexCmd := "0x" + hex.EncodeToString(cmdBytes)
 	cmd, err := NewBitcoinCmd(hexCmd)
 	if err != nil {
 		return err
 	}
 
-	length := binary.LittleEndian.Uint32(b.Bytes()[16:20])
-	checksum := binary.BigEndian.Uint32(b.Bytes()[20:24])
-
-	msgHeader.Magic = *magic
 	msgHeader.Cmd = *cmd
+
+	// Decode length
+	lenghtBytes := make([]byte, 4)
+	_, err = b.Read(lenghtBytes)
+	if err != nil {
+		return fmt.Errorf("Could not decode length")
+	}
+	length := binary.LittleEndian.Uint32(lenghtBytes)
 	msgHeader.Length = length
+
+	// Decode checksum
+	checksumBytes := make([]byte, 4)
+	_, err = b.Read(checksumBytes)
+	if err != nil {
+		return fmt.Errorf("Could not decode checksum")
+	}
+	checksum := binary.BigEndian.Uint32(checksumBytes)
 	msgHeader.Checksum = checksum
 
 	return nil
@@ -72,8 +99,10 @@ type MsgNetAddr struct {
 	Timestamp time.Time
 	// Services represents bitfield of features to be enabled for this connection.
 	Services uint64
-	// Addr represents the address of node.
-	Addr net.Addr
+	// Ip represents node's ip.
+	Ip net.IP
+	// Port represent node's port.
+	Port uint16
 }
 
 // Decode decodes MsgNetAddr contained in given buffer.
@@ -83,51 +112,43 @@ type MsgNetAddr struct {
 // [28:30] Port
 func (msgNetAddr *MsgNetAddr) Decode(b *bytes.Buffer) error {
 	// TODO: Check size taking into account msg version does not include timestamp
-	unix := binary.LittleEndian.Uint32(b.Bytes()[0:4])
+	unixBytes := make([]byte, 4)
+	_, err := b.Read(unixBytes)
+	if err != nil {
+		return fmt.Errorf("Could not decode timestamp")
+	}
 
-	fmt.Println(unix)
-
+	unix := binary.LittleEndian.Uint32(unixBytes)
 	msgNetAddr.Timestamp = time.Unix(int64(unix), 0)
 
 	// TODO: Add service
-	// services := binary.LittleEndian.Uint64(b.Bytes()[4:12])
-	// msgNetAddr.Services = services
+	b.Next(8)
 
-	ip := net.IP(b.Bytes()[12:28])
-	port := binary.BigEndian.Uint16(b.Bytes()[28:30])
-
-	tcpAddr := net.JoinHostPort(ip.String(), strconv.Itoa(int(port)))
-	addr, err := net.ResolveTCPAddr("tcp", tcpAddr)
+	ipBytes := make([]byte, 16)
+	_, err = b.Read(ipBytes)
 	if err != nil {
-		return err
+		return fmt.Errorf("Could not decode ip")
 	}
 
-	msgNetAddr.Addr = addr
+	msgNetAddr.Ip = net.IP(ipBytes)
+
+	portBytes := make([]byte, 2)
+	_, err = b.Read(portBytes)
+	if err != nil {
+		return fmt.Errorf("Could not decode port")
+	}
+
+	msgNetAddr.Port = binary.BigEndian.Uint16(portBytes)
 
 	return nil
 }
 
-// Decode initializes MsgNetAddr properties from bytes Buffer
+// Encode encodes MsgNetAddr in given buffer.
 // [0:4] BitcoinNet
 // [4:16] BitcoinCmd
 // [16:20] Checksum
 // [20:24] Length
 func (msgNetAddr *MsgNetAddr) Encode(b *bytes.Buffer) error {
-	data := []byte{}
-	unix := uint32(msgNetAddr.Timestamp.Unix())
-	binary.LittleEndian.PutUint32(data, unix)
 
-	services := []byte{}
-	binary.LittleEndian.PutUint64(services, msgNetAddr.Services)
-	data = append(data, services...)
-
-	// TODO: add ip and port
-
-	_, err := b.Write(data)
-	if err != nil {
-		return err
-	}
-
-	// TODO: Check n and compare with expected size
 	return nil
 }

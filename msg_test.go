@@ -52,10 +52,16 @@ func TestMsgNetAddr(t *testing.T) {
 		msgNetAddr := &MsgNetAddr{}
 		msgNetAddr.Decode(b)
 
-		addr := msgNetAddr.Addr.String()
-		expected := "93.176.130.139:37721"
-		if addr != expected {
-			t.Errorf("Wrong address (%s), expected (%s)", addr, expected)
+		ip := msgNetAddr.Ip.String()
+		expectedIp := "93.176.130.139"
+		if ip != expectedIp {
+			t.Errorf("Wrong ip (%s), expected (%s)", ip, expectedIp)
+		}
+
+		port := int(msgNetAddr.Port)
+		expectedPort := 37721
+		if port != expectedPort {
+			t.Errorf("Wrong port (%d), expected (%d)", port, expectedPort)
 		}
 
 		if msgNetAddr.Timestamp != time.Unix(int64(0), 0) {
