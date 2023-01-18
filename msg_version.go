@@ -20,9 +20,9 @@ type MsgVersion struct {
 	Timestamp time.Time
 	// AddRecv represents the network address of the node receiving this msg.
 	// AddRecv [26]byte
-	AddRecv net.IP
+	AddRecv net.Addr
 	// AddFrom represents the network address of the node sending this msg.
-	// AddFrom net.Addr
+	// AddFrom net.IP
 	// Nonce represents random nonce generated every time a version msg is sent.
 	Nonce uint64
 	// UserAgent represents information of the node.
@@ -35,42 +35,50 @@ type MsgVersion struct {
 	Relay bool
 }
 
+// Encode encode MsgVersion in given Buffer.
 // TODO: implement
 func (msgv *MsgVersion) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
-// TODO: implement
+// Decode decodes MsgVersion in given Buffer.
+// [0:24] MsgHeaders
+// [24:28] Version
+// [28:36] Services
+// [36:44] Timestamp
+// [44:70] AddRecv
+// 		[44:52] AddRecv Services
+// 		[52:68] AddRecv IP
+// 		[68:70] AddRecv Port
+
+// [70:96] AddFrom
+// 		[70:78] AddFrom Services
+// 		[78:94] AddFrom IP
+// 		[94:96] AddFrom Port
+
 func (msgv *MsgVersion) Decode(b *bytes.Buffer) error {
 	headers := &MsgHeader{}
 	err := headers.Decode(b)
 	if err != nil {
-		return err
+		return fmt.Errorf("Could not decode Headers, cause %s", err.Error())
 	}
-
-	version := binary.LittleEndian.Uint32(b.Bytes()[24:28])
-	services := binary.LittleEndian.Uint64(b.Bytes()[28:36])
-	unix := binary.LittleEndian.Uint64(b.Bytes()[36:44])
-	addrRecv := b.Bytes()[52:70]
-	nonce := binary.LittleEndian.Uint64(b.Bytes()[96:104])
-	relay := b.Bytes()[b.Len()-1:][0]
-	startHeight := binary.LittleEndian.Uint32(b.Bytes()[b.Len()-5 : b.Len()-1])
 
 	msgv.Headers = *headers
-	msgv.Version = version
-	msgv.Services = services
-	msgv.Timestamp = time.Unix(int64(unix), 0)
-	msgv.AddRecv = net.IP(addrRecv[:net.IPv6len])
-	msgv.Nonce = nonce
-	msgv.StartHeight = startHeight
 
-	if relay == 0x00 {
-		msgv.Relay = false
-	} else {
-		msgv.Relay = true
+	msgv.Version = binary.LittleEndian.Uint32(b.Bytes()[24:28])
+	msgv.Services = binary.LittleEndian.Uint64(b.Bytes()[28:36])
+
+	unix := binary.LittleEndian.Uint64(b.Bytes()[36:44])
+	msgv.Timestamp = time.Unix(int64(unix), 0)
+
+	msgNetAddr := &MsgNetAddr{}
+	err = msgNetAddr.Decode(bytes.NewBuffer(b.Bytes()[96:104]))
+	if err != nil {
+		return fmt.Errorf("Could not decode AddRecv, cause %s", err.Error())
 	}
 
-	fmt.Printf("Start height 0x%x\n", msgv.StartHeight)
+	msgv.AddRecv = msgNetAddr.Addr
+	msgv.Nonce = binary.LittleEndian.Uint64(b.Bytes()[96:104])
 
 	return nil
 }

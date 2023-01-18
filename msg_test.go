@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"testing"
+	"time"
 )
 
 func TestMsgHeaderDecode(t *testing.T) {
@@ -33,6 +34,32 @@ func TestMsgHeaderDecode(t *testing.T) {
 		cheksum := 0x358d4932
 		if msgHeader.Checksum != uint32(cheksum) {
 			t.Errorf("Checksum (0x%x), expected (0x%x)", msgHeader.Checksum, cheksum)
+		}
+	})
+}
+
+func TestMsgNetAddr(t *testing.T) {
+	t.Run("Decode", func(t *testing.T) {
+		data := []byte{
+			0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+			0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+			0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0xff,
+			0x5d, 0xb0, 0x82, 0x8b, 0x93, 0x59,
+		}
+
+		b := bytes.NewBuffer(data)
+
+		msgNetAddr := &MsgNetAddr{}
+		msgNetAddr.Decode(b)
+
+		addr := msgNetAddr.Addr.String()
+		expected := "93.176.130.139:37721"
+		if addr != expected {
+			t.Errorf("Wrong address (%s), expected (%s)", addr, expected)
+		}
+
+		if msgNetAddr.Timestamp != time.Unix(int64(0), 0) {
+			t.Errorf("Wrong timestamp")
 		}
 	})
 }
