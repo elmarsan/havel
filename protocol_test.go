@@ -31,24 +31,43 @@ func TestBitcoinNet(t *testing.T) {
 	})
 }
 
-func TestBitcoinCmd(t *testing.T) {
-	t.Run("should recognice bitcoin command", func(t *testing.T) {
-		cmds := []string{VersionCmdHex}
+func TestBitcoinCmdFromHex(t *testing.T) {
+	t.Run("should return error when unknown command", func(t *testing.T) {
+		cmd := &BitcoinCmd{}
 
-		for _, cmd := range cmds {
-			_, err := NewBitcoinCmd(cmd)
-			if err != nil {
-				t.Errorf("Could not recognice command (%s)", cmd)
-			}
+		data := BitcoinCmdData{0xaa, 0xbb, 0x72, 0x71, 0x11, 0xf1, 0x65, 0x00, 0x00, 0x00, 0x00, 0x12}
+		err := cmd.FromHex(data)
+		if err == nil {
+			t.Errorf("Command should not be recognized")
 		}
 	})
 
-	t.Run("should NOT recognice unexisting commands", func(t *testing.T) {
-		cmd := "0xf4f5f6abae1298"
+	t.Run("should NOT return error", func(t *testing.T) {
+		cmd := &BitcoinCmd{}
 
-		_, err := NewBitcoinCmd(cmd)
+		err := cmd.FromHex(VersionCmdData)
+		if err != nil {
+			t.Errorf("Command not recognized")
+		}
+	})
+}
+
+func TestBitcoinCmdFromString(t *testing.T) {
+	t.Run("should return error when unknown command", func(t *testing.T) {
+		cmd := &BitcoinCmd{}
+
+		err := cmd.FromString("Help")
 		if err == nil {
-			t.Errorf("Cmd (%s) should NOT be valid bitcoin command", cmd)
+			t.Errorf("Command should not be recognized")
+		}
+	})
+
+	t.Run("should NOT return error", func(t *testing.T) {
+		cmd := &BitcoinCmd{}
+
+		err := cmd.FromString("Version")
+		if err != nil {
+			t.Errorf("Command not recognized")
 		}
 	})
 }

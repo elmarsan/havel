@@ -44,21 +44,6 @@ func (msgv *MsgVersion) Encode(b *bytes.Buffer) error {
 	return nil
 }
 
-// Decode decodes MsgVersion in given Buffer.
-// [0:24] MsgHeaders
-// [24:28] Version
-// [28:36] Services
-// [36:44] Timestamp
-// [44:70] AddRecv
-// 		[44:52] AddRecv Services
-// 		[52:68] AddRecv IP
-// 		[68:70] AddRecv Port
-
-// [70:96] AddFrom
-// 		[70:78] AddFrom Services
-// 		[78:94] AddFrom IP
-// 		[94:96] AddFrom Port
-
 func (msgv *MsgVersion) Decode(b *bytes.Buffer) error {
 	// Decode headers
 	headers := &MsgHeader{}

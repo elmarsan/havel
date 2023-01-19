@@ -22,8 +22,8 @@ func TestMsgHeaderDecode(t *testing.T) {
 			t.Errorf("Magic (0x%x), expected (0x%x)", msgHeader.Magic, MainNet)
 		}
 
-		if msgHeader.Cmd != VersionCmd {
-			t.Errorf("Cmd (0x%x), expected (%s)", msgHeader.Cmd, VersionCmdHex)
+		if msgHeader.Cmd.Name != VersionCmd {
+			t.Errorf("Cmd (0x%x), expected (%s)", msgHeader.Cmd, VersionCmd)
 		}
 
 		length := 0x64

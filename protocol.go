@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 )
 
 // BitcoinNet represents which bitcoin network a message belongs to.
@@ -33,25 +32,56 @@ func NewBitcoinNet(net uint32) (*BitcoinNet, error) {
 	return nil, fmt.Errorf("Unknown BitcoinNet (%d)", net)
 }
 
-// BitcoinCmd represents a command used in p2p communication.
-type BitcoinCmd [12]byte
+// BitcoinCmdData represents command data shared between nodes.
+type BitcoinCmdData [12]byte
 
-// VersionCmd represents version command of bitcoin protocol.
-var VersionCmd BitcoinCmd = BitcoinCmd{0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00}
+// BitcoinCmdName represents a command used in p2p communication.
+type BitcoinCmdName string
 
-// VersionCmdHex represents version command of bitcoin protocol in hexadecimal string value.
-var VersionCmdHex string = "0x76657273696f6e0000000000"
+const (
+	VersionCmd BitcoinCmdName = "Version"
+)
 
-// btcNetUint32 is a map of bitcoin networks back to their uint32 value
-var btcCmdHexString = map[string]BitcoinCmd{
-	VersionCmdHex: VersionCmd,
+var VersionCmdData BitcoinCmdData = BitcoinCmdData{0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00}
+
+// btcCmdDataName is a map of BitcoinCmdData back to their BitcoinCmd.
+var btcCmdDataName = map[BitcoinCmdData]BitcoinCmdName{
+	VersionCmdData: VersionCmd,
 }
 
-// NewBitcoinCmd returns BitcoinCmd matching the hexadecimal string value.
-func NewBitcoinCmd(cmdHex string) (*BitcoinCmd, error) {
-	if s, ok := btcCmdHexString[strings.ToLower(cmdHex)]; ok {
-		return &s, nil
+// btcCmdNameData is a map of BitcoinCmd back to their BitcoinCmdData.
+var btcCmdNameData = map[BitcoinCmdName]BitcoinCmdData{
+	VersionCmd: VersionCmdData,
+}
+
+// BitcoinCmd represents bitcoin command protocol.
+type BitcoinCmd struct {
+	// HexData represents cmd bytes.
+	HexData BitcoinCmdData
+	// Name represents cmd name.
+	Name BitcoinCmdName
+}
+
+// FromHex initialices BitcoinCmd properties from BitcoinCmdData.
+func (cmd *BitcoinCmd) FromHex(data [12]byte) error {
+	name, ok := btcCmdDataName[BitcoinCmdData(data)]
+	if !ok {
+		return fmt.Errorf("Unknown Bitcoin command")
 	}
 
-	return nil, fmt.Errorf("Unknown BitcoinCmd (%s)", cmdHex)
+	cmd.Name = name
+	cmd.HexData = BitcoinCmdData(data)
+	return nil
+}
+
+// FromString initialices BitcoinCmd properties from BitcoinCmdName.
+func (cmd *BitcoinCmd) FromString(name string) error {
+	data, ok := btcCmdNameData[BitcoinCmdName(name)]
+	if !ok {
+		return fmt.Errorf("Unknown Bitcoin command")
+	}
+
+	cmd.HexData = data
+	cmd.Name = BitcoinCmdName(name)
+	return nil
 }

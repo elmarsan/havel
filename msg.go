@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"net"
 	"time"
@@ -24,7 +23,7 @@ const (
 // https://en.bitcoin.it/wiki/Protocol_documentation#Message_structure
 type MsgHeader struct {
 	Magic    BitcoinNet // Magic represents the value indicating the origin network.
-	Cmd      BitcoinCmd // Cmd represents the content type of the msg.
+	Cmd      BitcoinCmd // Cmd represents type of p2p command.
 	Length   uint32     // Lenght of payload in number of bytes.
 	Checksum uint32     // Checksum holds first 4 bytes of sha256(sha256(payload)).
 }
@@ -32,14 +31,15 @@ type MsgHeader struct {
 // Encode encodes MsgHeader in given Buffer.
 // TODO: Implement
 func (msgHeader *MsgHeader) Encode(b *bytes.Buffer) error {
+	// Encode magic
+	magicBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(magicBytes, uint32(msgHeader.Magic))
+	b.Write(magicBytes)
+
 	return nil
 }
 
 // Decode decodes MsgHeader contained in given buffer.
-// [0:4] BitcoinNet
-// [4:16] BitcoinCmd
-// [16:20] Checksum
-// [20:24] Length
 func (msgHeader *MsgHeader) Decode(b *bytes.Buffer) error {
 	// Decode magic
 	magicBytes := make([]byte, 4)
@@ -57,14 +57,17 @@ func (msgHeader *MsgHeader) Decode(b *bytes.Buffer) error {
 	msgHeader.Magic = *magic
 
 	// Decode command
-	cmdBytes := make([]byte, 12)
+	var cmdBytes = make([]byte, 12)
 	_, err = b.Read(cmdBytes)
 	if err != nil {
 		return fmt.Errorf("Could not decode command")
 	}
 
-	hexCmd := "0x" + hex.EncodeToString(cmdBytes)
-	cmd, err := NewBitcoinCmd(hexCmd)
+	var cmdData [12]byte
+	copy(cmdData[:], cmdBytes)
+
+	cmd := &BitcoinCmd{}
+	err = cmd.FromHex(cmdData)
 	if err != nil {
 		return err
 	}
@@ -106,10 +109,6 @@ type MsgNetAddr struct {
 }
 
 // Decode decodes MsgNetAddr contained in given buffer.
-// [0:4] Timestamp
-// [4:12] Services
-// [12:28] IP
-// [28:30] Port
 func (msgNetAddr *MsgNetAddr) Decode(b *bytes.Buffer) error {
 	// TODO: Check size taking into account msg version does not include timestamp
 	unixBytes := make([]byte, 4)
@@ -144,11 +143,6 @@ func (msgNetAddr *MsgNetAddr) Decode(b *bytes.Buffer) error {
 }
 
 // Encode encodes MsgNetAddr in given buffer.
-// [0:4] BitcoinNet
-// [4:16] BitcoinCmd
-// [16:20] Checksum
-// [20:24] Length
 func (msgNetAddr *MsgNetAddr) Encode(b *bytes.Buffer) error {
-
 	return nil
 }
