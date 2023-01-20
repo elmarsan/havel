@@ -29,12 +29,36 @@ type MsgHeader struct {
 }
 
 // Encode encodes MsgHeader in given Buffer.
-// TODO: Implement
 func (msgHeader *MsgHeader) Encode(b *bytes.Buffer) error {
 	// Encode magic
 	magicBytes := make([]byte, 4)
-	binary.BigEndian.PutUint32(magicBytes, uint32(msgHeader.Magic))
-	b.Write(magicBytes)
+	binary.LittleEndian.PutUint32(magicBytes, uint32(msgHeader.Magic))
+	_, err := b.Write(magicBytes)
+	if err != nil {
+		return fmt.Errorf("Could not encode magic")
+	}
+
+	// Encode cmd
+	_, err = b.Write(msgHeader.Cmd.HexData[:])
+	if err != nil {
+		return fmt.Errorf("Could not encode command")
+	}
+
+	// Encode lenght
+	lengthBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(lengthBytes, uint32(msgHeader.Length))
+	_, err = b.Write(lengthBytes)
+	if err != nil {
+		return fmt.Errorf("Could not encode length")
+	}
+
+	// Encode checksum
+	checksumBytes := make([]byte, 4)
+	binary.BigEndian.PutUint32(checksumBytes, uint32(msgHeader.Checksum))
+	_, err = b.Write(checksumBytes)
+	if err != nil {
+		return fmt.Errorf("Could not encode checksum")
+	}
 
 	return nil
 }
