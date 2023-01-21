@@ -1,9 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"encoding/binary"
-	"fmt"
 	"io"
 	"net"
 	"time"
@@ -108,41 +106,67 @@ type MsgNetAddr struct {
 	Port uint16
 }
 
-// Decode decodes MsgNetAddr contained in given buffer.
-func (msgNetAddr *MsgNetAddr) Decode(b *bytes.Buffer) error {
-	// TODO: Check size taking into account msg version does not include timestamp
-	unixBytes := make([]byte, 4)
-	_, err := b.Read(unixBytes)
-	if err != nil {
-		return fmt.Errorf("Could not decode timestamp")
+// Decode decodes MsgNetAddr from r.
+func (msgNetAddr *MsgNetAddr) Decode(r io.Reader) error {
+	var unix uint32
+	ip := make([]byte, 16)
+
+	vals := []encode.DecodeVal{
+		{
+			Order: binary.LittleEndian,
+			Val:   &unix,
+		},
+		{
+			Order: binary.LittleEndian,
+			Val:   &msgNetAddr.Services,
+		},
+		{
+			Order: binary.LittleEndian,
+			Val:   &ip,
+		},
+		{
+			Order: binary.BigEndian,
+			Val:   &msgNetAddr.Port,
+		},
 	}
 
-	unix := binary.LittleEndian.Uint32(unixBytes)
+	err := encode.DecodeBatch(r, vals...)
+	if err != nil {
+		return err
+	}
+
+	msgNetAddr.Ip = ip
 	msgNetAddr.Timestamp = time.Unix(int64(unix), 0)
-
-	// TODO: Add service
-	b.Next(8)
-
-	ipBytes := make([]byte, 16)
-	_, err = b.Read(ipBytes)
-	if err != nil {
-		return fmt.Errorf("Could not decode ip")
-	}
-
-	msgNetAddr.Ip = net.IP(ipBytes)
-
-	portBytes := make([]byte, 2)
-	_, err = b.Read(portBytes)
-	if err != nil {
-		return fmt.Errorf("Could not decode port")
-	}
-
-	msgNetAddr.Port = binary.BigEndian.Uint16(portBytes)
 
 	return nil
 }
 
-// Encode encodes MsgNetAddr in given buffer.
-func (msgNetAddr *MsgNetAddr) Encode(b *bytes.Buffer) error {
-	return nil
+// Encode encodes MsgNetAddr into w.
+func (msgNetAddr *MsgNetAddr) Encode(w io.Writer) error {
+	unix := msgNetAddr.Timestamp.Unix()
+	unix32 := uint32(unix)
+
+	ip := make([]byte, 16)
+	copy(ip[:], msgNetAddr.Ip)
+
+	vals := []encode.EncodeVal{
+		{
+			Order: binary.LittleEndian,
+			Val:   &unix32,
+		},
+		{
+			Order: binary.LittleEndian,
+			Val:   &msgNetAddr.Services,
+		},
+		{
+			Order: binary.LittleEndian,
+			Val:   &ip,
+		},
+		{
+			Order: binary.BigEndian,
+			Val:   &msgNetAddr.Port,
+		},
+	}
+
+	return encode.EncodeBatch(w, vals...)
 }
