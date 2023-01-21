@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"net"
 	"time"
 
 	"github.com/elmarsan/havel/encode"
@@ -20,14 +19,10 @@ type MsgVersion struct {
 	Services uint64
 	// Timestamp represents standard UNIX timestamp.
 	Timestamp time.Time
-	// Ip represents node's ip.
-	RecvIP net.IP
-	// RecvPort represent node's port.
-	RecvPort uint16
-	// FromIP represents node's ip.
-	FromIP net.IP
-	// FromPort represent node's port.
-	FromPort uint16
+	// RecvAddr represents receiver network address.
+	RecvAddr *MsgNetAddr
+	// FromAddr represents sender network address.
+	FromAddr *MsgNetAddr
 	// Nonce represents random nonce generated every time a version msg is sent.
 	Nonce uint64
 	// UserAgent represents information of the node.
@@ -47,7 +42,7 @@ func (msgv *MsgVersion) Encode(w io.Writer) error {
 }
 
 // Decode decodes MsgVersion from r.
-// TODO: implement
+// TODO: finish implementation
 func (msgv *MsgVersion) Decode(r io.Reader) error {
 	// Decode headers
 	msgv.Header = &MsgHeader{}
@@ -56,7 +51,9 @@ func (msgv *MsgVersion) Decode(r io.Reader) error {
 		return fmt.Errorf("Could not decode Headers, cause %s", err.Error())
 	}
 
-	// Decode body
+	var unix uint64
+
+	// Decode version, services and timestamp
 	vals := []encode.DecodeVal{
 		{
 			Order: binary.LittleEndian,
@@ -66,7 +63,45 @@ func (msgv *MsgVersion) Decode(r io.Reader) error {
 			Order: binary.LittleEndian,
 			Val:   &msgv.Services,
 		},
+		{
+			Order: binary.LittleEndian,
+			Val:   &unix,
+		},
 	}
 
-	return encode.DecodeBatch(r, vals...)
+	err = encode.DecodeBatch(r, vals...)
+	if err != nil {
+		return err
+	}
+
+	msgv.Timestamp = time.Unix(int64(unix), 0)
+
+	// Decode RecvAddr
+	recvAddr := &MsgNetAddr{}
+	err = recvAddr.Decode(r)
+	if err != nil {
+		return err
+	}
+
+	// Decode FromAddr
+	fromAddr := &MsgNetAddr{}
+	err = fromAddr.Decode(r)
+	if err != nil {
+		return err
+	}
+
+	// Decode nonce
+	vals = []encode.DecodeVal{
+		{
+			Order: binary.LittleEndian,
+			Val:   &msgv.Nonce,
+		},
+	}
+
+	err = encode.DecodeBatch(r, vals...)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

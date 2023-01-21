@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"io"
 	"net"
-	"time"
 
 	"github.com/elmarsan/havel/encode"
 )
@@ -96,8 +95,6 @@ func (msgHeader *MsgHeader) Decode(r io.Reader) error {
 // MsgNetAddr represents network address of node.
 // https://en.bitcoin.it/wiki/Protocol_documentation#Network_address
 type MsgNetAddr struct {
-	// Timestamp represents standard UNIX timestamp.
-	Timestamp time.Time
 	// Services represents bitfield of features to be enabled for this connection.
 	Services uint64
 	// Ip represents node's ip.
@@ -108,14 +105,9 @@ type MsgNetAddr struct {
 
 // Decode decodes MsgNetAddr from r.
 func (msgNetAddr *MsgNetAddr) Decode(r io.Reader) error {
-	var unix uint32
 	ip := make([]byte, 16)
 
 	vals := []encode.DecodeVal{
-		{
-			Order: binary.LittleEndian,
-			Val:   &unix,
-		},
 		{
 			Order: binary.LittleEndian,
 			Val:   &msgNetAddr.Services,
@@ -136,24 +128,16 @@ func (msgNetAddr *MsgNetAddr) Decode(r io.Reader) error {
 	}
 
 	msgNetAddr.Ip = ip
-	msgNetAddr.Timestamp = time.Unix(int64(unix), 0)
 
 	return nil
 }
 
 // Encode encodes MsgNetAddr into w.
 func (msgNetAddr *MsgNetAddr) Encode(w io.Writer) error {
-	unix := msgNetAddr.Timestamp.Unix()
-	unix32 := uint32(unix)
-
 	ip := make([]byte, 16)
 	copy(ip[:], msgNetAddr.Ip)
 
 	vals := []encode.EncodeVal{
-		{
-			Order: binary.LittleEndian,
-			Val:   &unix32,
-		},
 		{
 			Order: binary.LittleEndian,
 			Val:   &msgNetAddr.Services,
