@@ -1,17 +1,19 @@
 package main
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 	"time"
+
+	"github.com/elmarsan/havel/encode"
 )
 
 // https://en.bitcoin.it/wiki/Protocol_documentation#version
 type MsgVersion struct {
-	// Headers represents msg headers.
-	Headers MsgHeader
+	// Header represents msg header.
+	Header *MsgHeader
 	// Version represents the protocol version used by the node.
 	Version uint32
 	// Services represents bitfield of features to be enabled for this connection.
@@ -38,65 +40,33 @@ type MsgVersion struct {
 	Relay bool
 }
 
-// Encode encode MsgVersion in given Buffer.
+// Encode encodes MsgVersion into w.
 // TODO: implement
-func (msgv *MsgVersion) Encode(b *bytes.Buffer) error {
+func (msgv *MsgVersion) Encode(w io.Writer) error {
 	return nil
 }
 
-func (msgv *MsgVersion) Decode(b *bytes.Buffer) error {
+// Decode decodes MsgVersion from r.
+// TODO: implement
+func (msgv *MsgVersion) Decode(r io.Reader) error {
 	// Decode headers
-	headers := &MsgHeader{}
-	err := headers.Decode(b)
+	msgv.Header = &MsgHeader{}
+	err := msgv.Header.Decode(r)
 	if err != nil {
 		return fmt.Errorf("Could not decode Headers, cause %s", err.Error())
 	}
 
-	msgv.Headers = *headers
-
-	// Decode version
-	versionBytes := make([]byte, 4)
-	_, err = b.Read(versionBytes)
-	if err != nil {
-		return fmt.Errorf("Could not decode version")
+	// Decode body
+	vals := []encode.DecodeVal{
+		{
+			Order: binary.LittleEndian,
+			Val:   &msgv.Version,
+		},
+		{
+			Order: binary.LittleEndian,
+			Val:   &msgv.Services,
+		},
 	}
 
-	msgv.Version = binary.LittleEndian.Uint32(versionBytes)
-
-	// Decode service
-	serviceBytes := make([]byte, 8)
-	_, err = b.Read(serviceBytes)
-	if err != nil {
-		return fmt.Errorf("Could not decode service")
-	}
-
-	msgv.Services = binary.LittleEndian.Uint64(serviceBytes)
-
-	// Decode unix
-	unixBytes := make([]byte, 8)
-	_, err = b.Read(unixBytes)
-	if err != nil {
-		return fmt.Errorf("Could not decode timestamp")
-	}
-
-	unix := binary.LittleEndian.Uint64(unixBytes)
-	msgv.Timestamp = time.Unix(int64(unix), 0)
-
-	// Decode RecvIP and RecvPort
-	msgNetAddr := &MsgNetAddr{}
-	err = msgNetAddr.Decode(b)
-	if err != nil {
-		return fmt.Errorf("Could not decode AddRecv, cause %s", err.Error())
-	}
-
-	// Decode nonce
-	nonceBytes := make([]byte, 8)
-	_, err = b.Read(nonceBytes)
-	if err != nil {
-		return fmt.Errorf("Could not decode nonce")
-	}
-
-	msgv.Nonce = binary.LittleEndian.Uint64(nonceBytes)
-
-	return nil
+	return encode.DecodeBatch(r, vals...)
 }

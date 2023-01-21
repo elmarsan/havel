@@ -32,8 +32,11 @@ func NewBitcoinNet(net uint32) (*BitcoinNet, error) {
 	return nil, fmt.Errorf("Unknown BitcoinNet (%d)", net)
 }
 
+// BitcoinCmdSize represents the size of p2p cmd.
+const BitcoinCmdSize = 12
+
 // BitcoinCmdData represents command data shared between nodes.
-type BitcoinCmdData [12]byte
+type BitcoinCmdData [BitcoinCmdSize]byte
 
 // BitcoinCmdName represents a command used in p2p communication.
 type BitcoinCmdName string
@@ -63,14 +66,21 @@ type BitcoinCmd struct {
 }
 
 // FromHex initialices BitcoinCmd properties from BitcoinCmdData.
-func (cmd *BitcoinCmd) FromHex(data [12]byte) error {
-	name, ok := btcCmdDataName[BitcoinCmdData(data)]
+func (cmd *BitcoinCmd) FromHex(data []byte) error {
+	if len(data) != BitcoinCmdSize {
+		return fmt.Errorf("Invalid Bitcoin command size")
+	}
+
+	var cmdData [BitcoinCmdSize]byte
+	copy(cmdData[:], data)
+
+	name, ok := btcCmdDataName[BitcoinCmdData(cmdData)]
 	if !ok {
 		return fmt.Errorf("Unknown Bitcoin command")
 	}
 
 	cmd.Name = name
-	cmd.HexData = BitcoinCmdData(data)
+	cmd.HexData = BitcoinCmdData(cmdData)
 	return nil
 }
 

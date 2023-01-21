@@ -5,6 +5,14 @@ import (
 	"io"
 )
 
+// Encoder defines signature for encoding and decoding data.
+type Encoder interface {
+	// Encode encodes data into w
+	Encode(w io.Writer) error
+	// Decode decode data from r
+	Decode(r io.Reader) error
+}
+
 // readUint8 reads uint8 from r into d.
 func readUint8(r io.Reader, order binary.ByteOrder, d *uint8) error {
 	if err := binary.Read(r, order, d); err != nil {

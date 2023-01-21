@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"log"
 	"testing"
 	"time"
 )
@@ -15,10 +16,13 @@ func TestMsgHeader(t *testing.T) {
 
 	t.Run("Decode", func(t *testing.T) {
 		buf := bytes.NewBuffer(versionMsgHeader)
+
 		msgHeader := &MsgHeader{}
 		msgHeader.Decode(buf)
 
-		if msgHeader.Magic != MainNet {
+		log.Println(msgHeader.Length)
+
+		if *(msgHeader).Magic != MainNet {
 			t.Errorf("Magic (0x%x), expected (0x%x)", msgHeader.Magic, MainNet)
 		}
 
@@ -38,15 +42,17 @@ func TestMsgHeader(t *testing.T) {
 	})
 
 	t.Run("Encode", func(t *testing.T) {
-		msgHeader := &MsgHeader{}
-		msgHeader.Magic = MainNet
+		mainnet := MainNet
 
-		msgHeader.Cmd = BitcoinCmd{
-			HexData: VersionCmdData,
-			Name:    VersionCmd,
+		msgHeader := &MsgHeader{
+			Magic: &mainnet,
+			Cmd: &BitcoinCmd{
+				HexData: VersionCmdData,
+				Name:    VersionCmd,
+			},
+			Length:   0x64000000,
+			Checksum: 0x358d4932,
 		}
-		msgHeader.Length = 0x64000000
-		msgHeader.Checksum = 0x358d4932
 
 		d := []byte{}
 		b := bytes.NewBuffer(d)
