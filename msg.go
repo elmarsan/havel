@@ -154,3 +154,51 @@ func (msgNetAddr *MsgNetAddr) Encode(w io.Writer) error {
 
 	return encode.EncodeBatch(w, vals...)
 }
+
+// MsgStr represents variable length string using in messaging.
+// https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_string
+type MsgStr struct {
+	// Len represents the Len of the string.
+	Len uint8
+	// Str represents the string.
+	Str string
+}
+
+// Decode decodes MsgStr from r.
+func (msgStr *MsgStr) Decode(r io.Reader) error {
+	// Decode len
+	err := encode.Decode(r, binary.LittleEndian, &msgStr.Len)
+	if err != nil {
+		return err
+	}
+
+	// Allocate space for str using Len
+	str := make([]byte, msgStr.Len)
+	err = encode.Decode(r, binary.LittleEndian, &str)
+	if err != nil {
+		return err
+	}
+
+	msgStr.Str = string(str)
+
+	return nil
+}
+
+// Encode encodes MsgNetAddr into w.
+func (msgStr *MsgStr) Encode(w io.Writer) error {
+	str := make([]byte, msgStr.Len)
+	copy(str[:], msgStr.Str)
+
+	vals := []encode.EncodeVal{
+		{
+			Order: binary.LittleEndian,
+			Val:   &msgStr.Len,
+		},
+		{
+			Order: binary.LittleEndian,
+			Val:   &str,
+		},
+	}
+
+	return encode.EncodeBatch(w, vals...)
+}

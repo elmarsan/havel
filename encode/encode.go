@@ -58,8 +58,8 @@ func readSlice(r io.Reader, order binary.ByteOrder, d *[]byte) error {
 	return nil
 }
 
-// decode decodes r into d.
-func decode(r io.Reader, order binary.ByteOrder, d interface{}) error {
+// Decode decodes r into d.
+func Decode(r io.Reader, order binary.ByteOrder, d interface{}) error {
 	switch t := d.(type) {
 	case *uint8:
 		return readUint8(r, order, t)
@@ -86,7 +86,7 @@ type DecodeVal struct {
 // DecodeBatch decodes batch of values from b into DecodeVal.Val.
 func DecodeBatch(r io.Reader, vals ...DecodeVal) error {
 	for _, val := range vals {
-		if err := decode(r, val.Order, val.Val); err != nil {
+		if err := Decode(r, val.Order, val.Val); err != nil {
 			return err
 		}
 	}
