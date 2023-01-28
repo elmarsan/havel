@@ -27,7 +27,7 @@ type MsgVersion struct {
 	Nonce uint64
 	// UserAgent represents information of the node.
 	// https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki
-	UserAgent string
+	UserAgent *MsgStr
 	// StartHeight represents the last block received by the emitting node.
 	StartHeight uint32
 	// Relay represents whether the remote peer should announce relayed transactions or not.
@@ -83,6 +83,8 @@ func (msgv *MsgVersion) Decode(r io.Reader) error {
 		return err
 	}
 
+	msgv.RecvAddr = recvAddr
+
 	// Decode FromAddr
 	fromAddr := &MsgNetAddr{}
 	err = fromAddr.Decode(r)
@@ -90,15 +92,26 @@ func (msgv *MsgVersion) Decode(r io.Reader) error {
 		return err
 	}
 
+	msgv.FromAddr = fromAddr
+
 	// Decode nonce
-	vals = []encode.DecodeVal{
-		{
-			Order: binary.LittleEndian,
-			Val:   &msgv.Nonce,
-		},
+	err = encode.Decode(r, binary.LittleEndian, &msgv.Nonce)
+	if err != nil {
+		return err
 	}
 
-	err = encode.DecodeBatch(r, vals...)
+	// Decode user agent
+	userAgent := &MsgStr{}
+	err = userAgent.Decode(r)
+	if err != nil {
+		return err
+	}
+
+	msgv.UserAgent = userAgent
+
+	// Decode start height
+	err = encode.Decode(r, binary.LittleEndian, &msgv.StartHeight)
+	err = userAgent.Decode(r)
 	if err != nil {
 		return err
 	}
