@@ -36,19 +36,74 @@ type MsgVersion struct {
 }
 
 // Encode encodes MsgVersion into w.
-// TODO: implement
-func (msgv *MsgVersion) Encode(w io.Writer) error {
+func (version *MsgVersion) Encode(w io.Writer) error {
+	err := version.Header.Encode(w)
+	if err != nil {
+		return fmt.Errorf("Unable to encode header, (%s)", err.Error())
+	}
+
+	// Encode Version, Services and Timestamp
+	var unix uint64 = uint64(version.Timestamp.Unix())
+	vals := []encode.EncodeVal{
+		{
+			Order: binary.LittleEndian,
+			Val:   &version.Version,
+		},
+		{
+			Order: binary.LittleEndian,
+			Val:   &version.Services,
+		},
+		{
+			Order: binary.LittleEndian,
+			Val:   &unix,
+		},
+	}
+
+	err = encode.EncodeBatch(w, vals...)
+	if err != nil {
+		return err
+	}
+
+	// Encode RecvAddr
+	err = version.RecvAddr.Encode(w)
+	if err != nil {
+		return err
+	}
+
+	// Encode FromAddr
+	err = version.FromAddr.Encode(w)
+	if err != nil {
+		return err
+	}
+
+	// Encode Nonce
+	err = encode.Encode(w, binary.LittleEndian, &version.Nonce)
+	if err != nil {
+		return err
+	}
+
+	// Encode user agent
+	err = version.UserAgent.Encode(w)
+	if err != nil {
+		return err
+	}
+
+	// Encode StartHeight
+	err = encode.Encode(w, binary.LittleEndian, &version.StartHeight)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Decode decodes MsgVersion from r.
-// TODO: finish implementation
-func (msgv *MsgVersion) Decode(r io.Reader) error {
+func (version *MsgVersion) Decode(r io.Reader) error {
 	// Decode headers
-	msgv.Header = &MsgHeader{}
-	err := msgv.Header.Decode(r)
+	version.Header = &MsgHeader{}
+	err := version.Header.Decode(r)
 	if err != nil {
-		return fmt.Errorf("Could not decode Headers, cause %s", err.Error())
+		return fmt.Errorf("Unable to decode header, (%s)", err.Error())
 	}
 
 	var unix uint64
@@ -57,11 +112,11 @@ func (msgv *MsgVersion) Decode(r io.Reader) error {
 	vals := []encode.DecodeVal{
 		{
 			Order: binary.LittleEndian,
-			Val:   &msgv.Version,
+			Val:   &version.Version,
 		},
 		{
 			Order: binary.LittleEndian,
-			Val:   &msgv.Services,
+			Val:   &version.Services,
 		},
 		{
 			Order: binary.LittleEndian,
@@ -74,7 +129,7 @@ func (msgv *MsgVersion) Decode(r io.Reader) error {
 		return err
 	}
 
-	msgv.Timestamp = time.Unix(int64(unix), 0)
+	version.Timestamp = time.Unix(int64(unix), 0)
 
 	// Decode RecvAddr
 	recvAddr := &MsgNetAddr{}
@@ -83,7 +138,7 @@ func (msgv *MsgVersion) Decode(r io.Reader) error {
 		return err
 	}
 
-	msgv.RecvAddr = recvAddr
+	version.RecvAddr = recvAddr
 
 	// Decode FromAddr
 	fromAddr := &MsgNetAddr{}
@@ -92,10 +147,10 @@ func (msgv *MsgVersion) Decode(r io.Reader) error {
 		return err
 	}
 
-	msgv.FromAddr = fromAddr
+	version.FromAddr = fromAddr
 
 	// Decode nonce
-	err = encode.Decode(r, binary.LittleEndian, &msgv.Nonce)
+	err = encode.Decode(r, binary.LittleEndian, &version.Nonce)
 	if err != nil {
 		return err
 	}
@@ -107,11 +162,10 @@ func (msgv *MsgVersion) Decode(r io.Reader) error {
 		return err
 	}
 
-	msgv.UserAgent = userAgent
+	version.UserAgent = userAgent
 
 	// Decode start height
-	err = encode.Decode(r, binary.LittleEndian, &msgv.StartHeight)
-	err = userAgent.Decode(r)
+	err = encode.Decode(r, binary.LittleEndian, &version.StartHeight)
 	if err != nil {
 		return err
 	}

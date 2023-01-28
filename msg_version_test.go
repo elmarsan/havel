@@ -9,7 +9,7 @@ import (
 )
 
 func TestMsgVersion(t *testing.T) {
-	msg := []byte{
+	data := []byte{
 		// Header
 		// Magic
 		0xf9, 0xbe, 0xb4, 0xd9,
@@ -58,43 +58,69 @@ func TestMsgVersion(t *testing.T) {
 		0xC0, 0x3E, 0x03, 0x00,
 	}
 
-	b := bytes.NewBuffer(msg)
+	mainnet := MainNet
 
-	t.Run("decode", func(t *testing.T) {
-		msgVersion := &MsgVersion{}
-		expected := &MsgVersion{
-			Version:   0xea62,
-			Services:  0x00000001,
-			Timestamp: time.Unix(int64(0x50d0b211), 0),
-			Nonce:     0x6517e68c5db32e3b,
-			RecvAddr: &MsgNetAddr{
-				Services: 0x00000000,
-				Ip: net.IP{
-					0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-					0x0, 0x0, 0xff, 0xff, 0x5d, 0xb0, 0x82, 0x8b,
-				},
-				Port: 0x9359,
+	sample := &MsgVersion{
+		Header: &MsgHeader{
+			Magic: &mainnet,
+			Cmd: &BitcoinCmd{
+				HexData: VersionCmdData,
+				Name:    VersionCmd,
 			},
-			FromAddr: &MsgNetAddr{
-				Services: 0x00000000,
-				Ip: net.IP{
-					0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-					0x0, 0x0, 0xff, 0xff, 0x5d, 0xb0, 0x82, 0x8b,
-				},
-				Port: 0x9359,
+			Length:   0x64,
+			Checksum: 0x32498d35,
+		},
+		Version:   0xea62,
+		Services:  0x00000001,
+		Timestamp: time.Unix(1355854353, 0),
+		Nonce:     0x6517e68c5db32e3b,
+		RecvAddr: &MsgNetAddr{
+			Services: 0x00000000,
+			Ip: net.IP{
+				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+				0x0, 0x0, 0xff, 0xff, 0x5d, 0xb0, 0x82, 0x8b,
 			},
-			UserAgent: &MsgStr{
-				Len: 15,
-				Str: "/Satoshi:0.7.2/",
+			Port: 0x9359,
+		},
+		FromAddr: &MsgNetAddr{
+			Services: 0x00000000,
+			Ip: net.IP{
+				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+				0x0, 0x0, 0xff, 0xff, 0x5d, 0xb0, 0x82, 0x8b,
 			},
-			StartHeight: 212672,
+			Port: 0x9359,
+		},
+		UserAgent: &MsgStr{
+			Len: 15,
+			Str: "/Satoshi:0.7.2/",
+		},
+		StartHeight: 212672,
+	}
+
+	t.Run("Decode", func(t *testing.T) {
+		b := bytes.NewBuffer(data)
+
+		version := &MsgVersion{}
+		err := version.Decode(b)
+		if err != nil {
+			t.Errorf("Unable to decode (%s)", err.Error())
 		}
 
-		msgVersion.Decode(b)
-		expected.Header = msgVersion.Header
-
-		if !reflect.DeepEqual(msgVersion, expected) {
+		if !reflect.DeepEqual(version, sample) {
 			t.Error("Wrong decoding")
+		}
+	})
+
+	t.Run("Encode", func(t *testing.T) {
+		b := bytes.NewBuffer([]byte{})
+
+		err := sample.Encode(b)
+		if err != nil {
+			t.Errorf("Unable to encode (%s)", err.Error())
+		}
+
+		if bytes.Compare(b.Bytes(), data) != 0 {
+			t.Error("Wrong encoding")
 		}
 	})
 }

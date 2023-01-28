@@ -29,15 +29,15 @@ func (msgHeader *MsgHeader) Encode(w io.Writer) error {
 			Val:   &magic,
 		},
 		{
-			Order: binary.BigEndian,
+			Order: binary.LittleEndian,
 			Val:   &cmd,
 		},
 		{
-			Order: binary.BigEndian,
+			Order: binary.LittleEndian,
 			Val:   &msgHeader.Length,
 		},
 		{
-			Order: binary.BigEndian,
+			Order: binary.LittleEndian,
 			Val:   &msgHeader.Checksum,
 		},
 	}
@@ -64,7 +64,7 @@ func (msgHeader *MsgHeader) Decode(r io.Reader) error {
 			Val:   &msgHeader.Length,
 		},
 		{
-			Order: binary.BigEndian,
+			Order: binary.LittleEndian,
 			Val:   &msgHeader.Checksum,
 		},
 	}
@@ -113,7 +113,7 @@ func (msgNetAddr *MsgNetAddr) Decode(r io.Reader) error {
 			Val:   &msgNetAddr.Services,
 		},
 		{
-			Order: binary.LittleEndian,
+			Order: binary.BigEndian,
 			Val:   &ip,
 		},
 		{
@@ -143,7 +143,7 @@ func (msgNetAddr *MsgNetAddr) Encode(w io.Writer) error {
 			Val:   &msgNetAddr.Services,
 		},
 		{
-			Order: binary.LittleEndian,
+			Order: binary.BigEndian,
 			Val:   &ip,
 		},
 		{

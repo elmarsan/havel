@@ -139,8 +139,8 @@ func writeSlice(w io.Writer, order binary.ByteOrder, d *[]byte) error {
 	return nil
 }
 
-// encode encodes d into w.
-func encode(w io.Writer, order binary.ByteOrder, d interface{}) error {
+// Encode encodes d into w.
+func Encode(w io.Writer, order binary.ByteOrder, d interface{}) error {
 	switch t := d.(type) {
 	case *uint8:
 		return writeUint8(w, order, t)
@@ -168,7 +168,7 @@ type EncodeVal struct {
 // EncodeBatch encodes batch of values from EncodeVal.Val into w.
 func EncodeBatch(w io.Writer, vals ...EncodeVal) error {
 	for _, val := range vals {
-		if err := encode(w, val.Order, val.Val); err != nil {
+		if err := Encode(w, val.Order, val.Val); err != nil {
 			return err
 		}
 	}

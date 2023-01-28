@@ -2,14 +2,13 @@ package main
 
 import (
 	"bytes"
-	"log"
 	"net"
 	"reflect"
 	"testing"
 )
 
 func TestMsgHeader(t *testing.T) {
-	versionMsgHeader := []byte{
+	data := []byte{
 		// Magic
 		0xf9, 0xbe, 0xb4, 0xd9,
 		// Command
@@ -21,68 +20,42 @@ func TestMsgHeader(t *testing.T) {
 		0x35, 0x8d, 0x49, 0x32,
 	}
 
+	mainnet := MainNet
+
+	sample := &MsgHeader{
+		Magic: &mainnet,
+		Cmd: &BitcoinCmd{
+			HexData: VersionCmdData,
+			Name:    VersionCmd,
+		},
+		Length:   0x64,
+		Checksum: 0x32498d35,
+	}
+
 	t.Run("Decode", func(t *testing.T) {
-		buf := bytes.NewBuffer(versionMsgHeader)
+		b := bytes.NewBuffer(data)
 
-		msgHeader := &MsgHeader{}
-		msgHeader.Decode(buf)
-
-		log.Println(msgHeader.Length)
-
-		if *(msgHeader).Magic != MainNet {
-			t.Errorf("Magic (0x%x), expected (0x%x)", msgHeader.Magic, MainNet)
+		header := &MsgHeader{}
+		err := header.Decode(b)
+		if err != nil {
+			t.Errorf("Unable to decode (%s)", err.Error())
 		}
 
-		if msgHeader.Cmd.Name != VersionCmd {
-			t.Errorf("Cmd (0x%x), expected (%s)", msgHeader.Cmd, VersionCmd)
-		}
-
-		length := 0x64
-		if msgHeader.Length != uint32(length) {
-			t.Errorf("Lenght (0x%x), expected (0x%x)", msgHeader.Length, length)
-		}
-
-		cheksum := 0x358d4932
-		if msgHeader.Checksum != uint32(cheksum) {
-			t.Errorf("Checksum (0x%x), expected (0x%x)", msgHeader.Checksum, cheksum)
+		if !reflect.DeepEqual(header, sample) {
+			t.Error("Wrong encoding")
 		}
 	})
 
 	t.Run("Encode", func(t *testing.T) {
-		mainnet := MainNet
+		b := bytes.NewBuffer([]byte{})
 
-		msgHeader := &MsgHeader{
-			Magic: &mainnet,
-			Cmd: &BitcoinCmd{
-				HexData: VersionCmdData,
-				Name:    VersionCmd,
-			},
-			Length:   0x64000000,
-			Checksum: 0x358d4932,
-		}
-
-		d := []byte{}
-		b := bytes.NewBuffer(d)
-
-		err := msgHeader.Encode(b)
+		err := sample.Encode(b)
 		if err != nil {
-			t.Errorf("Wrong msg header encoding, cause (%s)", err.Error())
+			t.Errorf("Unable to encode (%s)", err.Error())
 		}
 
-		versionMsgHeader := []byte{
-			// Magic
-			0xf9, 0xbe, 0xb4, 0xd9,
-			// Command
-			0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x00,
-			0x00, 0x00, 0x00, 0x00,
-			// Length
-			0x64, 0x00, 0x00, 0x00,
-			// Checksum
-			0x35, 0x8d, 0x49, 0x32,
-		}
-
-		if bytes.Compare(b.Bytes(), versionMsgHeader) != 0 {
-			t.Error("Wrong msg header encoding")
+		if bytes.Compare(b.Bytes(), data) != 0 {
+			t.Error("Wrong encoding")
 		}
 	})
 }
@@ -99,17 +72,17 @@ func TestMsgNetAddr(t *testing.T) {
 		0x93, 0x59,
 	}
 
+	sample := &MsgNetAddr{
+		Services: 0x00000000,
+		Ip: net.IP{
+			0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+			0x0, 0x0, 0xff, 0xff, 0x5d, 0xb0, 0x82, 0x8b,
+		},
+		Port: 0x9359,
+	}
+
 	t.Run("Decode", func(t *testing.T) {
 		b := bytes.NewBuffer(data)
-
-		expected := &MsgNetAddr{
-			Services: 0x00000000,
-			Ip: net.IP{
-				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-				0x0, 0x0, 0xff, 0xff, 0x5d, 0xb0, 0x82, 0x8b,
-			},
-			Port: 0x9359,
-		}
 
 		msgNetAddr := &MsgNetAddr{}
 		err := msgNetAddr.Decode(b)
@@ -117,7 +90,7 @@ func TestMsgNetAddr(t *testing.T) {
 			t.Error("Could not decode")
 		}
 
-		if !reflect.DeepEqual(msgNetAddr, expected) {
+		if !reflect.DeepEqual(msgNetAddr, sample) {
 			t.Error("Wrong decoding")
 		}
 	})
@@ -125,16 +98,7 @@ func TestMsgNetAddr(t *testing.T) {
 	t.Run("Encode", func(t *testing.T) {
 		b := bytes.NewBuffer([]byte{})
 
-		msgNetAddr := &MsgNetAddr{
-			Services: 0x00000000,
-			Ip: net.IP{
-				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
-				0x0, 0x0, 0xff, 0xff, 0x5d, 0xb0, 0x82, 0x8b,
-			},
-			Port: 0x9359,
-		}
-
-		err := msgNetAddr.Encode(b)
+		err := sample.Encode(b)
 		if err != nil {
 			t.Error("Could not encode")
 		}
