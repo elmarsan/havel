@@ -10,7 +10,7 @@ import (
 	"github.com/elmarsan/havel/protocol"
 )
 
-func TestMsgVersion(t *testing.T) {
+func TestVersion(t *testing.T) {
 	data := []byte{
 		// Header
 		// Magic
@@ -92,8 +92,10 @@ func TestMsgVersion(t *testing.T) {
 			},
 			Port: 0x9359,
 		},
-		UserAgent: &Str{
-			Len: 15,
+		UserAgent: &VarStr{
+			VarInt: VarInt{
+				Length: 15,
+			},
 			Val: "/Satoshi:0.7.2/",
 		},
 		StartHeight: 212672,

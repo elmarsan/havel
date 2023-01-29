@@ -25,7 +25,7 @@ type Version struct {
 	Nonce uint64
 	// UserAgent represents information of the node.
 	// https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki
-	UserAgent *Str
+	UserAgent *VarStr
 	// StartHeight represents the last block received by the emitting node.
 	StartHeight uint32
 	// Relay represents whether the remote peer should announce relayed transactions or not.
@@ -154,7 +154,7 @@ func (version *Version) Decode(r io.Reader) error {
 	}
 
 	// Decode user agent
-	userAgent := &Str{}
+	userAgent := &VarStr{}
 	err = userAgent.Decode(r)
 	if err != nil {
 		return err

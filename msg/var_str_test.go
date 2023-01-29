@@ -13,15 +13,17 @@ func TestStr(t *testing.T) {
 		0x69, 0x3A, 0x30, 0x2E, 0x37, 0x2E, 0x32, 0x2F,
 	}
 
-	sample := &Str{
-		Len: 15,
+	sample := &VarStr{
+		VarInt: VarInt{
+			Length: 15,
+		},
 		Val: "/Satoshi:0.7.2/",
 	}
 
 	t.Run("Decode", func(t *testing.T) {
 		b := bytes.NewBuffer(data)
 
-		str := &Str{}
+		str := &VarStr{}
 		err := str.Decode(b)
 		if err != nil {
 			t.Error("Could not decode")
