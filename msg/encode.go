@@ -1,4 +1,4 @@
-package encode
+package msg
 
 import (
 	"encoding/binary"

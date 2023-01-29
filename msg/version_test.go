@@ -1,4 +1,4 @@
-package main
+package msg
 
 import (
 	"bytes"
@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/elmarsan/havel/protocol"
 )
 
 func TestMsgVersion(t *testing.T) {
@@ -58,14 +60,14 @@ func TestMsgVersion(t *testing.T) {
 		0xC0, 0x3E, 0x03, 0x00,
 	}
 
-	mainnet := MainNet
+	mainnet := protocol.MainNet
 
-	sample := &MsgVersion{
-		Header: &MsgHeader{
+	sample := &Version{
+		Header: &Header{
 			Magic: &mainnet,
-			Cmd: &BitcoinCmd{
-				HexData: VersionCmdData,
-				Name:    VersionCmd,
+			Cmd: &protocol.BitcoinCmd{
+				HexData: protocol.VersionCmdData,
+				Name:    protocol.VersionCmd,
 			},
 			Length:   0x64,
 			Checksum: 0x32498d35,
@@ -74,7 +76,7 @@ func TestMsgVersion(t *testing.T) {
 		Services:  0x00000001,
 		Timestamp: time.Unix(1355854353, 0),
 		Nonce:     0x6517e68c5db32e3b,
-		RecvAddr: &MsgNetAddr{
+		RecvAddr: &NetAddr{
 			Services: 0x00000000,
 			Ip: net.IP{
 				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
@@ -82,7 +84,7 @@ func TestMsgVersion(t *testing.T) {
 			},
 			Port: 0x9359,
 		},
-		FromAddr: &MsgNetAddr{
+		FromAddr: &NetAddr{
 			Services: 0x00000000,
 			Ip: net.IP{
 				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
@@ -90,9 +92,9 @@ func TestMsgVersion(t *testing.T) {
 			},
 			Port: 0x9359,
 		},
-		UserAgent: &MsgStr{
+		UserAgent: &Str{
 			Len: 15,
-			Str: "/Satoshi:0.7.2/",
+			Val: "/Satoshi:0.7.2/",
 		},
 		StartHeight: 212672,
 	}
@@ -100,7 +102,7 @@ func TestMsgVersion(t *testing.T) {
 	t.Run("Decode", func(t *testing.T) {
 		b := bytes.NewBuffer(data)
 
-		version := &MsgVersion{}
+		version := &Version{}
 		err := version.Decode(b)
 		if err != nil {
 			t.Errorf("Unable to decode (%s)", err.Error())

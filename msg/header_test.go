@@ -1,14 +1,15 @@
-package main
+package msg
 
 import (
 	"bytes"
 	"reflect"
 	"testing"
+
+	"github.com/elmarsan/havel/protocol"
 )
 
-func TestMsgVerack(t *testing.T) {
+func TestHeader(t *testing.T) {
 	data := []byte{
-		// Header
 		// Magic
 		0xf9, 0xbe, 0xb4, 0xd9,
 		// Command
@@ -20,38 +21,36 @@ func TestMsgVerack(t *testing.T) {
 		0x35, 0x8d, 0x49, 0x32,
 	}
 
-	mainnet := MainNet
+	mainnet := protocol.MainNet
 
-	sample := &MsgVerack{
-		Header: &MsgHeader{
-			Magic: &mainnet,
-			Cmd: &BitcoinCmd{
-				HexData: VersionCmdData,
-				Name:    VersionCmd,
-			},
-			Length:   0x64,
-			Checksum: 0x32498d35,
+	sample := &Header{
+		Magic: &mainnet,
+		Cmd: &protocol.BitcoinCmd{
+			HexData: protocol.VersionCmdData,
+			Name:    protocol.VersionCmd,
 		},
+		Length:   0x64,
+		Checksum: 0x32498d35,
 	}
 
 	t.Run("Decode", func(t *testing.T) {
 		b := bytes.NewBuffer(data)
 
-		verack := &MsgVerack{}
-		err := verack.Decode(b)
+		header := &Header{}
+		err := header.Decode(b)
 		if err != nil {
 			t.Errorf("Unable to decode (%s)", err.Error())
 		}
 
-		if !reflect.DeepEqual(verack, sample) {
-			t.Error("Wrong decoding")
+		if !reflect.DeepEqual(header, sample) {
+			t.Error("Wrong encoding")
 		}
 	})
 
 	t.Run("Encode", func(t *testing.T) {
 		b := bytes.NewBuffer([]byte{})
-		err := sample.Encode(b)
 
+		err := sample.Encode(b)
 		if err != nil {
 			t.Errorf("Unable to encode (%s)", err.Error())
 		}
