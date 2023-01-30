@@ -6,6 +6,7 @@ import (
 	"io"
 )
 
+// InvObj represents all types of inventory object
 type InvObj uint32
 
 const (
@@ -19,7 +20,7 @@ const (
 	MSG_FILTERED_WITNESS_BLOCK InvObj = 0x40000003
 )
 
-// btcNetUint32 is a map of inventory objects back to their uint32 value
+// invObjUint32 is a map of inventory objects back to their uint32 value
 var invObjUint32 = map[uint32]InvObj{
 	uint32(UNKNOWN):                    UNKNOWN,
 	uint32(MSG_TX):                     MSG_TX,
@@ -75,7 +76,6 @@ func (iv *InvVec) Decode(r io.Reader) error {
 	}
 
 	iv.Obj = *invObj
-
 	copy(iv.Hash[:], hash)
 
 	return nil
