@@ -42,17 +42,24 @@ type BitcoinCmdData [BitcoinCmdSize]byte
 type BitcoinCmdName string
 
 const (
-	VersionCmd BitcoinCmdName = "Version"
-	VerackCmd  BitcoinCmdName = "Verack"
+	VersionCmd    BitcoinCmdName = "version"
+	VerackCmd     BitcoinCmdName = "verack"
+	AddrCmd       BitcoinCmdName = "addr"
+	InvCmd        BitcoinCmdName = "inv"
+	GetDataCmd    BitcoinCmdName = "getdata"
+	GetBlocksCmd  BitcoinCmdName = "getblocks"
+	GetHeadersCmd BitcoinCmdName = "getheaders"
 )
 
 var VersionCmdData BitcoinCmdData = BitcoinCmdData{0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x00, 0x00, 0x00, 0x00, 0x00}
 var VerackCmdData BitcoinCmdData = BitcoinCmdData{0xf9, 0xbe, 0xb4, 0xD9, 0x76, 0x65, 0x72, 0x61, 0x63, 0x6B, 0x00, 0x00}
+var AddrCmdData BitcoinCmdData = BitcoinCmdData{0x61, 0x64, 0x64, 0x72, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 
 // btcCmdDataName is a map of BitcoinCmdData back to their BitcoinCmd.
 var btcCmdDataName = map[BitcoinCmdData]BitcoinCmdName{
 	VersionCmdData: VersionCmd,
 	VerackCmdData:  VerackCmd,
+	AddrCmdData:    AddrCmd,
 }
 
 // btcCmdNameData is a map of BitcoinCmd back to their BitcoinCmdData.
