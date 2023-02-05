@@ -1,0 +1,54 @@
+package protocol
+
+import (
+	"bytes"
+	"testing"
+)
+
+func TestHash(t *testing.T) {
+	sample := []byte{
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x19, 0xd6, 0x68,
+		0x9c, 0x08, 0x5a, 0xe1, 0x65, 0x83, 0x1e, 0x93,
+		0x4f, 0xf7, 0x63, 0xae, 0x46, 0xa2, 0xa6, 0xc1,
+		0x72, 0xb3, 0xf1, 0xb6, 0x0a, 0x8c, 0xe2, 0x6f,
+	}
+
+	t.Run("NewHashFromString", func(t *testing.T) {
+		hash := "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+
+		h, err := NewHashFromString(hash)
+		if err != nil {
+			t.Errorf("Unable to create hash from string (%s)", err)
+		}
+
+		if len(h) > HashSize {
+			t.Errorf("Invalid Hash size (%d)", len(h))
+		}
+
+		val := []byte(h[:])
+
+		if bytes.Compare(sample, val) != 0 {
+			t.Error("Wrong hash")
+		}
+	})
+
+	t.Run("Reverse", func(t *testing.T) {
+		expected := []byte{
+			0xe2, 0x6f, 0xa, 0x8c, 0xf1, 0xb6, 0x72, 0xb3,
+			0xa6, 0xc1, 0x46, 0xa2, 0x63, 0xae, 0x4f, 0xf7,
+			0x1e, 0x93, 0x65, 0x83, 0x5a, 0xe1, 0x9c, 0x8,
+			0xd6, 0x68, 0x0, 0x19, 0x0, 0x0, 0x0, 0x0,
+		}
+
+		hash := "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f"
+
+		h, _ := NewHashFromString(hash)
+		reversed := h.Reverse()
+
+		reverserVal := []byte(reversed[:])
+
+		if bytes.Compare(expected, reverserVal) != 0 {
+			t.Error("Wrong reverse")
+		}
+	})
+}
