@@ -75,7 +75,7 @@ func TestBitcoinCmdFromString(t *testing.T) {
 	t.Run("should NOT return error", func(t *testing.T) {
 		cmd := &BitcoinCmd{}
 
-		err := cmd.FromString("Version")
+		err := cmd.FromString("version")
 		if err != nil {
 			t.Errorf("Command not recognized")
 		}

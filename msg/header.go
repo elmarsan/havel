@@ -10,15 +10,15 @@ import (
 // Header represents a default information contained in every protocol msg.
 // https://en.bitcoin.it/wiki/Protocol_documentation#Message_structure
 type Header struct {
-	Magic    *protocol.BitcoinNet // Magic represents the value indicating the origin network.
-	Cmd      *protocol.BitcoinCmd // Cmd represents type of p2p command.
-	Length   uint32               // Lenght of payload in number of bytes.
-	Checksum uint32               // Checksum holds first 4 bytes of sha256(sha256(payload)).
+	Magic    protocol.BitcoinNet // Magic represents the value indicating the origin network.
+	Cmd      protocol.BitcoinCmd // Cmd represents type of p2p command.
+	Length   uint32              // Lenght of payload in number of bytes.
+	Checksum uint32              // Checksum holds first 4 bytes of sha256(sha256(payload)).
 }
 
 // Encode encodes Header into w.
 func (header *Header) Encode(w io.Writer) error {
-	magic := uint32(*header.Magic)
+	magic := uint32(header.Magic)
 	cmd := make([]byte, 12)
 	copy(cmd, header.Cmd.HexData[:])
 
@@ -79,8 +79,8 @@ func (header *Header) Decode(r io.Reader) error {
 		return err
 	}
 
-	header.Magic = btcNet
-	header.Cmd = &protocol.BitcoinCmd{}
+	header.Magic = *btcNet
+	header.Cmd = protocol.BitcoinCmd{}
 
 	// Convert cmd to BitcoinCmd
 	err = header.Cmd.FromHex(cmd)

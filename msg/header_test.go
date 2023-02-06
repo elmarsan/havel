@@ -21,11 +21,9 @@ func TestHeader(t *testing.T) {
 		0x35, 0x8d, 0x49, 0x32,
 	}
 
-	mainnet := protocol.MainNet
-
 	sample := &Header{
-		Magic: &mainnet,
-		Cmd: &protocol.BitcoinCmd{
+		Magic: protocol.MainNet,
+		Cmd: protocol.BitcoinCmd{
 			HexData: protocol.VersionCmdData,
 			Name:    protocol.VersionCmd,
 		},

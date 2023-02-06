@@ -60,12 +60,10 @@ func TestVersion(t *testing.T) {
 		0xC0, 0x3E, 0x03, 0x00,
 	}
 
-	mainnet := protocol.MainNet
-
 	sample := &Version{
 		Header: &Header{
-			Magic: &mainnet,
-			Cmd: &protocol.BitcoinCmd{
+			Magic: protocol.MainNet,
+			Cmd: protocol.BitcoinCmd{
 				HexData: protocol.VersionCmdData,
 				Name:    protocol.VersionCmd,
 			},

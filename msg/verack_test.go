@@ -22,12 +22,10 @@ func TestVerack(t *testing.T) {
 		0x35, 0x8d, 0x49, 0x32,
 	}
 
-	mainnet := protocol.MainNet
-
 	sample := &Verack{
 		Header: &Header{
-			Magic: &mainnet,
-			Cmd: &protocol.BitcoinCmd{
+			Magic: protocol.MainNet,
+			Cmd: protocol.BitcoinCmd{
 				HexData: protocol.VersionCmdData,
 				Name:    protocol.VersionCmd,
 			},
