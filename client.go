@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"strconv"
 	"strings"
@@ -76,18 +75,12 @@ func (c *Client) AddPeer(addr string) error {
 		StartHeight: 0,
 	}
 
-	// verack := msg.Verack{
-	// 	Header: &header,
-	// }
-
 	conn, err := net.Dial("tcp", addr)
 	if err != nil {
 		return fmt.Errorf("Unable to connect peer (%s)", err)
 	}
 
 	defer conn.Close()
-
-	fmt.Println("Connected")
 
 	versionData := bytes.NewBuffer([]byte{})
 	err = version.Encode(versionData)
@@ -97,35 +90,13 @@ func (c *Client) AddPeer(addr string) error {
 
 	_, err = conn.Write(versionData.Bytes())
 	if err != nil {
-		fmt.Printf("Error sending version message: %v\n", err)
+		return fmt.Errorf("Unable to send version: %v\n", err)
 	}
 
-	res, err := ioutil.ReadAll(conn)
-	if err != nil {
-		fmt.Println("Error reading version response")
-	}
-
-	fmt.Println("Version response")
-	fmt.Println(res)
-
-	// verackData := bytes.NewBuffer([]byte{})
-	// err = verack.Encode(verackData)
+	// _, err := ioutil.ReadAll(conn)
 	// if err != nil {
 	// 	return err
 	// }
-
-	// _, err = conn.Write(verackData.Bytes())
-	// if err != nil {
-	// 	fmt.Printf("Error sending verack message: %v\n", err)
-	// }
-
-	// res, err = ioutil.ReadAll(conn)
-	// if err != nil {
-	// 	fmt.Println("Error reading verack response")
-	// }
-
-	// fmt.Println("Verack response")
-	// fmt.Println(res)
 
 	return nil
 }

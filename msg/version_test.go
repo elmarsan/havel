@@ -58,6 +58,9 @@ func TestVersion(t *testing.T) {
 
 		// Start height
 		0xC0, 0x3E, 0x03, 0x00,
+
+		// Relay
+		0x00,
 	}
 
 	sample := &Version{
@@ -97,6 +100,7 @@ func TestVersion(t *testing.T) {
 			Val: "/Satoshi:0.7.2/",
 		},
 		StartHeight: 212672,
+		Relay:       false,
 	}
 
 	t.Run("Decode", func(t *testing.T) {

@@ -92,6 +92,20 @@ func (version *Version) Encode(w io.Writer) error {
 		return err
 	}
 
+	// Encode relay
+	var relay uint8
+
+	if version.Relay {
+		relay = 0x01
+	} else {
+		relay = 0x00
+	}
+
+	err = Encode(w, binary.LittleEndian, &relay)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -166,6 +180,19 @@ func (version *Version) Decode(r io.Reader) error {
 	err = Decode(r, binary.LittleEndian, &version.StartHeight)
 	if err != nil {
 		return err
+	}
+
+	// Decode relay
+	var relay uint8
+	err = Decode(r, binary.LittleEndian, &relay)
+	if err != nil {
+		return err
+	}
+
+	if relay == 0x01 {
+		version.Relay = true
+	} else {
+		version.Relay = false
 	}
 
 	return nil
